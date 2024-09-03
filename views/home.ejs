@@ -4,8 +4,10 @@
     <%- include("./partials/link") %>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <!-- <link rel="stylesheet" href="css/core.css"> -->
+    <title>CargoZen -Home</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="css/button.css">
 </head>
 <body>
     <!-- <link rel="stylesheet" href="css/core.css"> -->
@@ -13,5 +15,155 @@
     <%- include("./partials/nav") %>
     <%= JSON.stringify(user)  %>
 
+
+    <div class="hero-section">
+        <h1>Real-time Truck Tracking</h1>
+        <p>Efficient, Accurate, and Reliable Truck Tracking Solutions</p>
+        <% if (locals.user) { %><button onclick="scrollToMap()">Start Tracking</button>
+    </div>
+    
+    <section id="map-section" class="map-section">
+        <h2>Track Your Truck</h2>
+        <input type="text" id="search-bar" placeholder="Enter Truck ID or Destination">
+        <button onclick="searchTruck()">Search</button>
+        <div id="location-display">Latest Location: Not available</div>
+        <div id="map"></div>
+    </section>
+    <% } else{%>
+    </div>
+    <section class="features-section">
+        <h2>Our Features</h2>
+        <div class="feature-card">
+            <h3>Real-Time Tracking</h3>
+            <p>Track your trucks in real-time with our advanced tracking technology.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Detailed Analytics</h3>
+            <p>Get detailed analytics and reports to optimize your fleet management.</p>
+        </div>
+        <div class="feature-card">
+            <h3>24/7 Support</h3>
+            <p>Our support team is available 24/7 to assist you with any issues.</p>
+        </div>
+    </section>
+    <%}%>
+
+    <footer>
+        <p>&copy; 2024 Truck Tracking. All rights reserved.</p>
+    </footer>
+    <script>
+      /**  <!-- let map;
+        let marker;
+        let truckId;
+
+        function initializeMap(latitude, longitude) {
+            map = L.map('map').setView([latitude, longitude], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([latitude, longitude]).addTo(map);
+        }
+
+        function updateMap(latitude, longitude) {
+            if (marker) {
+                marker.setLatLng([latitude, longitude]);
+                map.setView([latitude, longitude], 13);
+            }
+        }
+
+        function searchTruck() {
+            truckId = document.getElementById('search-bar').value;
+
+            if (!truckId) {
+                alert("Please enter a Truck ID.");
+                return;
+            }
+
+            fetchLocationData(); // Initial fetch to set up the map and marker
+            setInterval(fetchLocationData, 3000); // Fetch every 3 seconds
+        }
+
+        function fetchLocationData() {
+            fetch(`/location/${truckId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.latitude && data.longitude) {
+                        if (!map) {
+                            initializeMap(data.latitude, data.longitude);
+                        } else {
+                            updateMap(data.latitude, data.longitude);
+                        }
+                    } else {
+                        alert("Location data not available for this Truck ID.");
+                    }
+                })
+                .catch(error => console.error('Error fetching location:', error));
+        } **/
+        let map;
+let marker;
+let intervalId;
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeMap();
+});
+
+function initializeMap() {
+    map = L.map('map').setView([0, 0], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    marker = L.marker([0, 0]).addTo(map);
+}
+
+function searchTruck() {
+    const truckId = document.getElementById('search-bar').value;
+
+    if (!truckId) {
+        alert("Please enter a valid Truck ID or Destination.");
+        return;
+    }
+
+    if (intervalId) {
+        clearInterval(intervalId); // Clear any existing intervals
+    }
+
+    intervalId = setInterval(() => {
+        fetch(`/location/${truckId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.latitude && data.longitude) {
+                    updateMap(data.latitude, data.longitude);
+                    updateLocationDisplay(data.latitude, data.longitude);
+                } else {
+                    alert("Location not found for the given Truck ID.");
+                    clearInterval(intervalId); // Stop checking if no location found
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching location:', error);
+                clearInterval(intervalId); // Stop checking on error
+            });
+    }, 3000); // Fetch every 3 seconds
+}
+
+function updateMap(latitude, longitude) {
+    if (map && marker) {
+        marker.setLatLng([latitude, longitude]);
+        map.setView([latitude, longitude], 13);
+    }
+}
+
+function updateLocationDisplay(latitude, longitude) {
+    const locationDisplay = document.getElementById('location-display');
+    locationDisplay.innerHTML = `Latest Location: Latitude: ${latitude}, Longitude: ${longitude}`;
+}
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

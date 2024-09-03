@@ -5,7 +5,8 @@ function createToken(user){
         _id:user.id,
         email:user.email,
         profileImgURL:user.profileImgURL,
-        role:user.role
+        role:user.role,
+        vno:user.vno
     };
     const token=JWT.sign(payload,secret,{
         expiresIn:60*60

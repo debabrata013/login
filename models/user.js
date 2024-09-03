@@ -1,6 +1,7 @@
 const{Schema,model}=require('mongoose')
 const {createHmac,randomBytes}=require('node:crypto')
-const {createToken,verifyToken}=require('../services/auth')
+const {createToken,verifyToken}=require('../services/auth');
+const { type } = require('node:os');
 const userSchema=new Schema({
     fullName:{
         type:String,
@@ -13,6 +14,8 @@ const userSchema=new Schema({
     salt:{type:String
         
 
+    },vno:{
+type: String
     },
     otp:{
         type:String,

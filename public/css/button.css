@@ -1,0 +1,17 @@
+.button {
+    display: inline-block; /* Makes the link behave like a button */
+    padding: 10px 20px; /* Adds padding around the text */
+    font-size: 16px; /* Increases the font size */
+    color: white; /* Text color */
+    background-color: #007bff; /* Button background color */
+    text-align: center; /* Centers the text */
+    text-decoration: none; /* Removes underline from the link */
+    border: none; /* Removes border */
+    border-radius: 5px; /* Rounds the corners */
+    cursor: pointer; /* Changes the cursor on hover */
+    transition: background-color 0.3s ease; /* Adds a smooth transition effect */
+}
+
+.button:hover {
+    background-color: #0056b3; /* Changes background color on hover */
+}

@@ -1,0 +1,76 @@
+/* Body Style */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    overflow-x: hidden;
+}
+
+/* Loading Spinner Styles */
+#loading {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #ddd;
+    border-top: 5px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fuel Management Section Styles */
+.fuel-management-section {
+    padding: 40px;
+    max-width: 800px;
+    margin: 80px auto;
+    opacity: 0; /* Start hidden */
+    transition: opacity 1s ease-in-out;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.fuel-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    transform: translateY(50px); /* Start off-screen */
+    opacity: 0;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.fuel-card h3 {
+    margin-top: 0;
+    color: #4CAF50;
+}
+
+.fuel-card p {
+    margin: 5px 0;
+    color: #666;
+}
+
+/* Scroll Animation */
+.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}

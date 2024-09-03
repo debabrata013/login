@@ -1,0 +1,140 @@
+/* styles.css */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to right, #6c63ff, #ab79ff);
+    color: #333;
+}
+
+.document-viewer {
+    max-width: 800px;
+    margin: 60px auto;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 1s ease-out;
+}
+
+.document-viewer::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: rgba(108, 99, 255, 0.2);
+    border-radius: 50%;
+    z-index: -1;
+    animation: float 6s ease-in-out infinite;
+}
+
+.document-viewer::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 150px;
+    height: 150px;
+    background: rgba(171, 121, 255, 0.2);
+    border-radius: 50%;
+    z-index: -1;
+    animation: float 8s ease-in-out infinite reverse;
+}
+
+.document-viewer h1 {
+    font-size: 2.2em;
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #6c63ff;
+    padding-bottom: 10px;
+    position: relative;
+}
+
+.document-viewer h1::after {
+    content: '';
+    width: 80px;
+    height: 4px;
+    background: #6c63ff;
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.document-viewer p {
+    font-size: 1.15em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+iframe, img {
+    border: 2px solid #e4e4e4;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+iframe:hover, img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.download-button {
+    display: inline-block;
+    padding: 12px 25px;
+    margin-top: 25px;
+    background-color: #6c63ff;
+    color: #fff;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(108, 99, 255, 0.3);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.download-button:hover {
+    background-color: #5a52d6;
+    box-shadow: 0 6px 12px rgba(90, 82, 214, 0.4);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+@media (max-width: 768px) {
+    .document-viewer {
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .document-viewer h1 {
+        font-size: 1.7em;
+    }
+
+    iframe, img {
+        width: 100%;
+        height: auto;
+    }
+}

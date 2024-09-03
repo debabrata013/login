@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Location Tracker with Optimal Route</title>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .home {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #location-display {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #inputs {
+            margin-top: 20px;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+</head>
+<body> <%- include("./partials/nav1") %>
+    <%- include("./partials/link") %>
+    <div class="home">
+        <button onclick="startTracking()" id="trackButton">Start Tracking</button>
+        <div id="location-display">Current Location: Not available</div>
+        
+        <div id="inputs">
+            <label for="end-place">End Place:</label>
+            <input type="text" id="end-place" placeholder="Enter end place">
+            <br>
+            <button onclick="calculateRoute()">Calculate Route</button>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <script>
+        let socket;
+        let watchId;
+        let map;
+        let marker;
+        let routingControl;
+        let currentLocation = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+
+            socket = io();
+            socket.on('locationUpdate', (data) => {
+                updateLocationDisplay(data.latitude, data.longitude);
+                updateMap(data.latitude, data.longitude);
+            });
+        });
+
+        function initializeMap() {
+            map = L.map('map').setView([0, 0], 13); 
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([0, 0]).addTo(map);
+        }
+
+        function startTracking() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(sendLocation, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function sendLocation(position) {
+            const { latitude, longitude } = position.coords;
+
+            updateLocationDisplay(latitude, longitude);
+            updateMap(latitude, longitude);
+
+            currentLocation = { lat: latitude, lng: longitude }; // Set current location for route calculation
+
+            fetch('/location', {
+                method: 'POST',
+                
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude, longitude}) 
+            })
+            .then(response => response.json())
+            .then(data => console.log('Location sent:', data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function updateMap(latitude, longitude) {
+            if (map && marker) {
+                marker.setLatLng([latitude, longitude]); 
+                map.setView([latitude, longitude], 13); 
+            }
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        function updateLocationDisplay(latitude, longitude) {
+            const locationDisplay = document.getElementById('location-display');
+            locationDisplay.innerHTML = `Current Location: Latitude: ${latitude}, Longitude: ${longitude}`;
+        }
+
+        document.getElementById('trackButton').addEventListener('click', function() {
+            this.style.backgroundColor = 'green'; 
+            this.textContent = 'Tracking Started'; 
+        });
+
+        async function calculateRoute() {
+            const endPlace = document.getElementById('end-place').value;
+
+            if (!endPlace || !currentLocation) {
+                alert("Please enter an end place and start tracking to use your current location.");
+                return;
+            }
+
+            try {
+                const endCoords = await geocodePlace(endPlace);
+
+                if (routingControl) {
+                    map.removeControl(routingControl); // Remove previous route
+                }
+
+                const startPoint = L.latLng(currentLocation.lat, currentLocation.lng); // Use current location as start
+                const endPoint = L.latLng(endCoords.lat, endCoords.lng);
+
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        startPoint, // Start at current location
+                        endPoint // End location
+                    ],
+                    routeWhileDragging: true,
+                    createMarker: () => null, // Hide default markers
+                    lineOptions: {
+                        styles: [
+                            { color: 'blue', opacity: 0.7, weight: 4, dashArray: '10, 10' }
+                        ]
+                    }
+                }).addTo(map);
+
+                map.setView(startPoint, 13); // Center map on start location
+
+            } catch (error) {
+                alert("Could not find the location. Please check the end place.");
+                console.error(error);
+            }
+        }
+
+        function geocodePlace(place) {
+            return new Promise((resolve, reject) => {
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&addressdetails=1&limit=1`;
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data[0]) {
+                            resolve({
+                                lat: data[0].lat,
+                                lng: data[0].lon
+                            });
+                        } else {
+                            reject("Place not found");
+                        }
+                    })
+                    .catch(error => reject(error));
+            });
+        }
+    </script>
+</body>
+</html>

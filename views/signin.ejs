@@ -7,11 +7,12 @@
     <%- include("./partials/link") %>
     <script src="/script/login.js"></script>
     <!-- <link rel="stylesheet" href="css/core.css"> -->
+    <link rel="stylesheet" href="/css/login.css">
 </head>
-<body>
-     
+<body class="login">
+<!--      
  
-<div class="main"> <%- include("./partials/error") %>
+<div class="main"> 
     <div class="mainl">
        
         <div class="cen">
@@ -29,6 +30,19 @@
             </form> 
             <a href="/user/verify">Forget password</a>
         </div>
+    </div> -->
+
+    <div class="login-container">
+        <form id="login-form" method="post" action="/user/signin">
+            <h2>Login</h2>
+            <input type="text"name="email" id="txt-username" placeholder="Enter email" required>
+            <input type="password" name="password" for="password" id="pwd" placeholder="Enter password" required>
+            <button type="submit"onclick="submitForm( )" >Login</button>
+            <p><a href="/user/verify" style="color: #fff;">Forgot Password?</a></p>
+            <p>Don't have an account? 
+                <!-- <a href="/user/signup" style="color: #fff;">Sign Up</a> -->
+            </p>
+        </form>
     </div>
 </div>
 </body>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Management System</title>
+    <link rel="stylesheet" href="/css/doc.css">
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <!-- <div id="loading" class="hidden">
+        <div class="spinner"></div>
+    </div> -->
+
+    <!-- Document Management Section -->
+    <section class="document-management-section">
+        <h1>Document Management Dashboard</h1>
+        <div class="document-card" data-aos="fade-up">
+            <h3>Upload New Document</h3>
+            <form action="/doc/docupload" method="post" enctype="multipart/form-data">
+                <input type="email" name="email" id="fileHeading" placeholder="Enter Email">
+            <input type="text" name="heading" id="fileHeading" placeholder="Enter Document Title">
+            <input type="file" name="file" class="file-upload" id="fileUpload" />
+            <button type="submit">Upload</button>
+            </form>
+            <p id="uploadStatus"></p>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Document Title</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Download</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% documents.forEach(function(doc) { %>
+                    <tr>
+                        <td><%= doc.title %></td>
+                        <td><%= doc.email %></td>
+                        <td><%= doc.status %></td>
+                        <td><a href="/download/<%= doc._id %>" download="<%= doc.title %>">Download</a></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <!-- Documents List -->
+       
+    </section>
+
+    <script>
+       
+    </script>
+</body>
+</html>

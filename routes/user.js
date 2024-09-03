@@ -1,116 +1,134 @@
-const {Router}=require('express')
-const {model}=require('mongoose')
-const User=require('../models/user')
-const  Otpm = require( '../services/otp');
-const  Email = require( '../services/email');
-const  Text = require( '../services/text');
+const { Router } = require('express');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const User = require('../models/user');
+const Document = require('../models/Document');
+const Otpm = require('../services/otp');
+const Email = require('../services/email');
+const Text = require('../services/text');
 
+const router = Router();
+const JWT_SECRET = '$uperMan@123';
 
-const router=Router();
-router.get('/signin',(req,res)=>{
-    return res.render("signin")
-})
-router.get('/signup',(req,res)=>{
-    return res.render("signup")
-})
-router.get('/forgetpass',(req,res)=>{
-    return res.render("forgetpass")
-})
-router.get('/verify',(req,res)=>{
-    return res.render("verifymail")
-})
+// Multer configuration for file upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, '/upload/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
 
+// File upload and document save handler
+router.post('/docupload', upload.single('file'), async (req, res) => {
+  const { heading } = req.body;
+  const file = req.file;
+  
+  if (!file) return res.status(400).send('No file uploaded.');
 
-router.post('/signup',async(req,res)=>{
-    const{fullName,email,password}=req.body;
-    await User.create({
-        fullName,
-        email,
-        password,
+  const token = req.cookies.token;
+  if (!token) return res.status(401).send('Unauthorized: No token provided.');
+
+  try {
+    const { email } = jwt.verify(token, JWT_SECRET);
+
+    const newDocument = new Document({
+      title: heading,
+      filePath: file.path,
+      email,
+      status: 'Processing'
     });
-    Email(email,'Welcome mail',Text.welcometext(fullName));
-    return res.redirect("/");
-   
-})
-router.post('/signin',async(req,res)=>{
-    const{email,password}=req.body;
-    try{
-   const token= await User.matchpassword(email,password)
-   console.log(token);
-   res.cookie('token', token).redirect("/")
-    }catch(e){
-     
-        console.log(e);
-        const error=e.toString()
-        return res.render('signin',{
-            error:error
-        })
-    }
-   
-})
+
+    await newDocument.save();
+    res.send('File uploaded successfully and document saved.');
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).send('An error occurred during the upload process.');
+  }
+});
+
+// GET request handler for document page view
+router.get('/documents', async (req, res) => {
+  try {
+      const documents = await Document.find().sort({ uploadedAt: -1 }).exec(); // Fetch documents sorted by upload date
+      res.render('documents', { documents }); // Render the documents.ejs view and pass the documents data
+  } catch (error) {
+      console.error('Error fetching documents:', error);
+      res.status(500).send('Error fetching documents');
+  }
+});
+
+// Render views
+['/signin', '/signup', '/forgetpass', '/verify', '/home'].forEach(route => {
+  router.get(route, (req, res) => res.render(route.substring(1)));
+});
+
+// User registration
+router.post('/signup', async (req, res) => {
+  const { fullName, email, password, vno } = req.body;
+
+  await User.create({ fullName, email, password, vno });
+  Email(email, 'Welcome mail', Text.welcometext(fullName));
+  res.redirect("/user/signup");
+});
+
+// User login
+router.post('/signin', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const token = await User.matchpassword(email, password);
+    const user = await User.findOne({ email });
+    
+    if (!user) return res.render('signin', { error: 'User not found' });
+
+    res.cookie('token', token).redirect(user.role === 'USER' ? '/home' : '/');
+  } catch (error) {
+    console.error(error);
+    res.render('signin', { error: error.toString() });
+  }
+});
+
+// Email verification with OTP
 router.post('/verify', async (req, res) => {
-    try {
-        const { email } = req.body;
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.json({ message: 'User not found' });
 
-        // Correctly find the user by email
-        var user = await User.findOne({ email: email });
-   
-        if (user) {
-            // Generate an OTP and save it to the user
-            const otpc = Otpm(6);
-         
-           
-           const op=await user.updateOne({$set:{
-                otp:otpc
-            }})
-           
-            // Send an email with the OTP
-            Email(email, 'Verify mail', Text.otptext(otpc));
-           
-            return res.redirect("/user/forgetpass");
-        } else {
-            // User not found
-            return res.json({
-                message: "User not found"
-            });
-        }
-    } catch (error) {
-        // Handle any errors
-        console.error(error);
-        return res.status(500).json({
-            message: "An error occurred"
-        });
-    }
+    const otpCode = Otpm(6);
+    await user.updateOne({ otp: otpCode });
+    Email(email, 'Verify mail', Text.otptext(otpCode));
+    res.redirect("/user/forgetpass");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
+  }
 });
+
+// Password reset
 router.post('/forgetpass', async (req, res) => {
-    try {
-        const { email, otp, password } = req.body;
-        const user = await User.findOne({ email: email });
+  const { email, otp, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.json({ message: 'User not found with the provided email.' });
 
-        if (user) {
-            console.log(user.otp);
-            console.log(user);
-            if (user.otp === otp) {
-                // await user.updateOne({ $set: { password: password } });
-                     user.password = password;
-                    await user.save();
-                return res.redirect('/');
-            } else {
-                const otpc = Otpm(6);
-                await user.updateOne({ $set: { otp: otpc } });
-                Email(email, 'Verify mail', Text.otptext(otpc));
-                return res.json({ message: 'OTP does not match, a new OTP is sent. Check your email.' });
-            }
-        } else {
-            return res.json({ message: 'User not found with the provided email.' });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Internal server error.' });
+    if (user.otp === otp) {
+      user.password = password;
+      await user.save();
+      res.redirect('/');
+    } else {
+      const newOtp = Otpm(6);
+      await user.updateOne({ otp: newOtp });
+      Email(email, 'Verify mail', Text.otptext(newOtp));
+      res.json({ message: 'OTP does not match, a new OTP is sent. Check your email.' });
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
 });
-router.get('/logout',(req,res)=>{
-    res.clearCookie("token").redirect("/")
-})
 
-module.exports=router;
+// Logout handler
+router.get('/logout', (req, res) => {
+  res.clearCookie("token").redirect("/");
+});
+
+module.exports = router;
